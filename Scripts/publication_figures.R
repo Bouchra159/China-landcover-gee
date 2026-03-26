@@ -16,7 +16,7 @@ ensure_pkgs <- function(pkgs) {
   if (length(miss)) install.packages(miss, dependencies = TRUE)
 }
 ensure_pkgs(c("terra", "ggplot2", "tidyterra", "ggspatial",
-              "patchwork", "scales", "sf", "dplyr", "RColorBrewer"))
+              "patchwork", "cowplot", "scales", "sf", "dplyr", "RColorBrewer"))
 
 suppressPackageStartupMessages({
   library(terra)

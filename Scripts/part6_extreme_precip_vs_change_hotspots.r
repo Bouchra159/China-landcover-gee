@@ -1,9 +1,12 @@
 # ---- Extreme precipitation × land-change exposure (DELTA) ----
-library(terra)
-library(tidyterra)
-library(ggplot2)
-library(dplyr)
-library(scales)
+source("Scripts/config.R")
+
+suppressPackageStartupMessages({
+  library(tidyterra)
+  library(ggplot2)
+  library(dplyr)
+  library(scales)
+})
 
 # Paths
 ext_path <- "figures/YRDelta_extremeFreq_p95_2018_2024.tif"
