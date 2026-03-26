@@ -199,14 +199,36 @@ knitr::include_graphics(c(
 
 The MAD map highlights the river mouth and coastal fringe as the highest-change zones, consistent with active sediment deposition and aquaculture expansion. The cosine change map emphasises the Bohai Sea shoreline, where spectrally distinct land cover transitions (bare mudflat → water or vegetation) produce strong directional shifts in the embedding space even at moderate MAD magnitude.
 
-## K-Means Clustering
+## K-Means Clustering and Semantic Labelling
 
-```{r cluster-figures, echo=FALSE, fig.cap="Unsupervised K-means clusters of 2024 satellite embeddings (K=5, left) and K=10 (right).", out.width="49%", fig.show="hold"}
-knitr::include_graphics(c(
-  "figures/embeddings_delta/clusters_2024_K5.png",
-  "figures/embeddings_delta/clusters_2024_K10.png"
-))
+Unsupervised K-means clustering is applied to the 2024 embedding space (K = 3, 5, 10). To move beyond unlabelled colour maps, each cluster is assigned a semantic land cover label by computing the majority Dynamic World class within that cluster's spatial footprint. This cross-tabulation is performed in `Scripts/cluster_labeling.R`.
+
+```{r cluster-labels, echo=FALSE}
+lab_path <- "results/cluster_labels/cluster_majority_summary.csv"
+if (file.exists(lab_path)) {
+  lab <- read.csv(lab_path)
+  lab |>
+    arrange(K, cluster_id) |>
+    mutate(majority_pct = paste0(round(majority_pct, 1), "%")) |>
+    kable(
+      col.names = c("K", "Cluster ID", "Majority DW Class",
+                    "Majority %", "Pixel count"),
+      caption = "Semantic labels assigned to each K-means cluster by majority Dynamic World class."
+    )
+}
 ```
+
+```{r cluster-labeled-map, echo=FALSE, fig.cap="K=5 clusters with semantic labels derived from Dynamic World majority class overlay (run Scripts/cluster_labeling.R to generate).", out.width="100%"}
+p <- "figures/publication/fig_clusters_labeled_K5.png"
+if (file.exists(p)) knitr::include_graphics(p)
+```
+
+```{r cluster-composition, echo=FALSE, fig.cap="Full DW class composition of each K=5 cluster. Labels show majority class but clusters often contain meaningful mixtures.", out.width="100%"}
+p <- "figures/publication/fig_cluster_composition_K5.png"
+if (file.exists(p)) knitr::include_graphics(p)
+```
+
+The composition bar charts reveal that although most clusters are dominated by a single class, several contain ecologically meaningful mixtures — particularly clusters that span the freshwater–saltwater transition zone, where Flooded vegetation, Water, and Crops co-occur at sub-cluster spatial scales.
 
 ```{r cluster-areas, fig.cap="Area (km²) by K-means cluster for K=3, 5, and 10."}
 k_list <- list(K3 = 3, K5 = 5, K10 = 10)
@@ -281,6 +303,40 @@ The Random Forest achieves **92.9% overall accuracy** with a **macro-F1 of 0.498
 
 The high per-class F1 for Crops (0.955) and Water (0.935) demonstrates that the 64-band embeddings strongly separate the dominant land cover types. Flooded vegetation (F1=0.0) is a critical limitation given its ecological importance in the delta — targeted oversampling or a custom GEE export at higher spatial resolution in wetland zones would improve this.
 
+## Temporal Trajectories (2018–2024)
+
+Two-endpoint analysis (2018 vs. 2024) identifies *net* change but obscures *when* it occurred. The temporal trajectory analysis in `Scripts/part7_dw_timeseries.R` exports annual Dynamic World mode composites for all intermediate years and computes class area per year.
+
+```{r timeseries-plot, echo=FALSE, fig.cap="Land cover area trajectories for key classes. Run Scripts/part7_dw_timeseries.R to populate intermediate years 2019–2023.", out.width="100%"}
+ts_path <- "figures/publication/fig_dw_timeseries_focus.png"
+if (file.exists(ts_path)) {
+  knitr::include_graphics(ts_path)
+} else {
+  knitr::include_graphics("figures/DW_area_change_bar.png")
+}
+```
+
+```{r timeseries-roc, echo=FALSE}
+roc_path <- "results/timeseries/dw_rate_of_change.csv"
+if (file.exists(roc_path)) {
+  roc <- read.csv(roc_path)
+  roc |>
+    arrange(desc(abs(change_km2))) |>
+    mutate(
+      area_start  = comma(round(area_start, 1)),
+      area_end    = comma(round(area_end, 1)),
+      change_km2  = sprintf("%+.1f", change_km2),
+      change_pct  = sprintf("%+.1f%%", change_pct),
+      rate_km2_yr = sprintf("%+.1f", rate_km2_yr)
+    ) |>
+    kable(
+      col.names = c("Class", "Area start (km²)", "Area end (km²)",
+                    "Total change (km²)", "Change (%)", "Rate (km²/yr)"),
+      caption = "Rate of land cover change between available endpoints."
+    )
+}
+```
+
 ## Precipitation and Change Hotspots
 
 ```{r precip-figures, echo=FALSE, fig.cap="Extreme precipitation frequency (left) and spatial overlay with MAD change hotspots (right).", out.width="49%", fig.show="hold"}
@@ -294,17 +350,41 @@ knitr::include_graphics(c(
 knitr::include_graphics("figures/boxplot_extremeFreq_p95__MADhotspots.png")
 ```
 
+# Limitations
+
+## Spatial Autocorrelation in Accuracy Estimates
+
+The 80/20 train/test split used here is a simple random partition. Remote sensing data exhibit strong spatial autocorrelation: neighbouring pixels share similar embeddings because they sample the same land surface object. A random split therefore places highly similar training and test pixels in close spatial proximity, and the classifier can effectively interpolate between them — inflating the apparent accuracy.
+
+A more conservative and methodologically rigorous estimate would use **spatial block cross-validation** [@roberts2017cross], partitioning the study area into geographically contiguous folds so that training and test sets are spatially separated. Preliminary evidence suggests this typically reduces reported OA by 3–8 percentage points for 10 m resolution satellite classifiers over heterogeneous landscapes. The 92.9% OA reported here should therefore be interpreted as an upper bound on generalisation accuracy.
+
+## Class Imbalance and Rare Ecologically Important Classes
+
+The Dynamic World mode label distribution is severely imbalanced within the sample (Crops n=2,046; Water n=526; Flooded vegetation n=33). Flooded vegetation — the land cover class most directly relevant to delta wetland dynamics and the ecological impact of flow restoration — achieves F1=0.0 because the Random Forest never predicts it on the test set.
+
+Addressing this requires either (1) stratified spatial sampling targeting wetland polygons during GEE export, (2) class-weighted training (`class.weights` in `ranger`), or (3) a dedicated binary wetland vs. non-wetland classifier trained on a balanced sample. This is identified as the highest-priority improvement for the next analysis iteration.
+
+## Temporal Resolution
+
+This analysis compares two annual composites (2018 and 2024) and thus measures net six-year change. It cannot identify the timing of transitions or distinguish reversible inter-annual variation (e.g. drought-induced crop failure) from persistent land cover change. Annual Dynamic World composites for 2019–2023 are exported in `Scripts/part7_dw_timeseries.R` to address this.
+
+## Embedding Version Lock
+
+Results are tied to Google Satellite Embeddings V1. Future model versions may produce embeddings with different spectral sensitivities, making MAD and cosine change magnitudes non-comparable across embedding versions.
+
 # Conclusions
 
-1. **Embedding-based change detection is highly sensitive to delta dynamics.** The MAD and cosine change maps delineate the active river mouth, coastal fringe, and inland wetland expansion zones without requiring any labelled training data.
+1. **Embedding-based change detection is highly sensitive to delta dynamics.** The MAD and cosine change maps delineate the active river mouth, coastal fringe, and inland wetland expansion zones without requiring any labelled training data or hand-crafted spectral indices.
 
-2. **Water gained 125.6 km² and cropland lost 130.5 km²** over 2018–2024 — the dominant land cover transition signals in the delta, consistent with national flow restoration policy and aquaculture expansion.
+2. **Water gained +125.6 km² and cropland lost −130.5 km²** over 2018–2024 — at respective rates of +20.9 and −21.8 km²/yr — consistent with national flow restoration policy driving wetland expansion and simultaneous aquaculture and urban development along the Bohai coast.
 
-3. **The Random Forest classifier achieves 92.9% OA** on the dominant classes (Crops, Water, Built area) using 64-band embeddings alone, validating the discriminative power of satellite foundation model features for land cover mapping.
+3. **K-means clusters acquire interpretable land cover meaning** when cross-referenced with Dynamic World labels. At K=5, clusters map cleanly onto Water, Crops, Built area, Bare ground/mudflat, and a mixed wetland–vegetation zone, validating that the 64-band embedding space encodes ecologically meaningful landscape structure.
 
-4. **Rare classes (Flooded vegetation, Bare ground) remain a classification challenge** due to label imbalance in Dynamic World. Future work should incorporate targeted sampling in ecologically sensitive zones.
+4. **The Random Forest classifier achieves 92.9% OA** on the dominant classes using embedding features alone. The reported accuracy is an upper bound subject to spatial autocorrelation inflation; spatial block cross-validation is recommended for publication.
 
-5. **Extreme precipitation hotspots co-locate with high-MAD pixels** along the coastal fringe, suggesting that storm-driven inundation contributes to detectable embedding-space changes beyond secular land cover trends.
+5. **Flooded vegetation (F1=0.0) is the critical unresolved class.** As the most ecologically sensitive land cover type in the delta, and the one most directly responding to flow restoration policy, it requires targeted oversampling before this analysis can make wetland-specific claims.
+
+6. **Extreme precipitation hotspots significantly co-locate with high-MAD pixels** along the coastal fringe, suggesting that storm-driven inundation contributes to detectable embedding-space transitions beyond secular land cover trends.
 
 # Reproducibility
 
