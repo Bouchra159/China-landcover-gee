@@ -8,20 +8,16 @@
 #   figures/embeddings_delta/*.png
 # ========================================================================
 
-setwd("C:/Users/BOUCHRA/Documents/land_cover_gis")
+source("Scripts/config.R")   # sets PROJECT_ROOT, terra options, KMEANS_K
 
 dir.create("results/embeddings_delta", showWarnings = FALSE, recursive = TRUE)
 dir.create("figures/embeddings_delta", showWarnings = FALSE, recursive = TRUE)
-dir.create("tmp", showWarnings = FALSE, recursive = TRUE)
 
 suppressPackageStartupMessages({
-  library(terra)
   library(ggplot2)
   library(tidyterra)
   library(dplyr)
 })
-
-terraOptions(tempdir = file.path(getwd(), "tmp"), memfrac = 0.6, progress = 1)
 
 # ---- Paths ----
 f18 <- "data/embeddings_delta/YR_delta_embeddings_2018.tif"

@@ -3,12 +3,10 @@
 # + Confusion matrix heatmap
 # + Spatial prediction & error maps (poster-grade)
 
-Sys.setenv(RETICULATE_PYTHON = "C:/Users/BOUCHRA/Documents/.virtualenvs/r-reticulate/Scripts/python.exe")
-setwd("C:/Users/BOUCHRA/Documents/land_cover_gis")
+source("Scripts/config.R")   # sets PROJECT_ROOT, PYTHON_PATH, GEE_PROJECT, terra options
 
 dir.create("results/linear_probe", recursive = TRUE, showWarnings = FALSE)
 dir.create("figures/linear_probe", recursive = TRUE, showWarnings = FALSE)
-dir.create("tmp", recursive = TRUE, showWarnings = FALSE)
 
 # Increase download timeout (Earth Engine can be slow)
 options(timeout = max(600, getOption("timeout")))
@@ -74,7 +72,7 @@ if (!file.exists(dw_label_path)) {
   cat("[PY] Using Python:", cfg$python, "\n")
 
   ee <- import("ee", delay_load = FALSE)
-  ee$Initialize(project = "ee-yellow-river-481216")
+  ee$Initialize(project = GEE_PROJECT)
 
   roi <- ee$Geometry$Rectangle(
     coords = list(bb$xmin, bb$ymin, bb$xmax, bb$ymax),

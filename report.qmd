@@ -1,0 +1,322 @@
+---
+title: "Land Cover Change Detection in the Yellow River Delta (2018–2024)"
+subtitle: "Satellite Foundation Model Embeddings × Dynamic World × Random Forest"
+author: "Bouchra Daddaoui"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    number-sections: true
+    theme: cosmo
+    fig-width: 9
+    fig-height: 6
+    code-fold: true
+    code-summary: "Show code"
+    embed-resources: true
+    smooth-scroll: true
+  pdf:
+    toc: true
+    number-sections: true
+    geometry: margin=2.5cm
+    fig-pos: "H"
+execute:
+  echo: true
+  warning: false
+  message: false
+  cache: true
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+source("Scripts/config.R")
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(dplyr)
+  library(tidyr)
+  library(knitr)
+  library(scales)
+})
+```
+
+# Introduction
+
+The Yellow River Delta (YRD) in Shandong Province, China, is one of the world's most dynamically evolving coastal landforms. Historically carrying the highest sediment load of any river system, the Yellow River now delivers less than 10% of its pre-dam sediment to the sea — a consequence of extensive upstream damming — driving a delta in geomorphic transition: net erosion on abandoned lobes, active accretion at the current river mouth, and expanding inland wetlands responding to national flow restoration policies [@wang2017yellow].
+
+The period **2018–2024** captures a critical window of environmental and policy change:
+
+- The **2019 Yellow River Basin Ecological Protection Plan** launched mandatory wetland restoration targets and altered flow regulation regimes
+- Increased freshwater delivery beginning 2020–2021 expanded flooded vegetation and open water extent
+- Continued coastal infrastructure development for aquaculture and industry expanded impervious surfaces
+
+This analysis uses **Google Satellite Embeddings V1** — 64-dimensional feature vectors derived from a satellite imagery foundation model — to detect and characterise land cover change across the delta at 10 m resolution, without relying on hand-crafted spectral indices.
+
+## Study Area
+
+The primary region of interest (ROI) covers the Yellow River Delta near Dongying:
+
+| Parameter | Value |
+|---|---|
+| Longitude | 118.35–119.35°E |
+| Latitude | 37.35–38.15°N |
+| Area | ~8,800 km² |
+| CRS | WGS84 (EPSG:4326) |
+
+# Data and Methods
+
+## Data Sources
+
+```{r data-table, echo=FALSE}
+data.frame(
+  Dataset = c(
+    "Google Satellite Embeddings V1",
+    "Google Dynamic World V1",
+    "ERA5 Precipitation (GPM IMERG)"
+  ),
+  Resolution = c("10 m, 64 bands", "10 m, 9 classes", "~30 km"),
+  `Time Period` = c("2018, 2024", "2018, 2024", "2018–2024"),
+  Source = c(
+    "Google Earth Engine",
+    "Google Earth Engine",
+    "Copernicus / GEE"
+  )
+) |>
+  kable(caption = "Summary of datasets used in this analysis.")
+```
+
+### Google Satellite Embeddings V1
+
+The embedding layer is produced by a foundation model trained on global satellite imagery.
+Each pixel is represented as a 64-dimensional float32 vector capturing learned spectral and
+textural features at 10 m resolution. Unlike hand-crafted indices (NDVI, NDWI), these
+embeddings encode complex multi-scale patterns without requiring explicit feature engineering.
+
+### Google Dynamic World
+
+Dynamic World provides near-real-time probabilistic land cover at 10 m resolution with 9 classes.
+We use the annual **mode** composite for 2018 and 2024 to reduce within-year noise and cloud contamination.
+
+## Methods Pipeline
+
+```{r pipeline-diagram, echo=FALSE, fig.cap="Analysis pipeline overview."}
+steps <- data.frame(
+  Step = paste0("Part ", 1:6),
+  Description = c(
+    "Export Dynamic World land cover (mode 2018 & 2024)",
+    "Change detection: MAD and cosine dissimilarity on embeddings",
+    "Export 64-band satellite embeddings; K-means clustering (K=3,5,10)",
+    "Supervised classification: Linear Probe + Random Forest",
+    "Extreme precipitation frequency maps (ERA5 P95)",
+    "Bivariate overlay: change hotspots × extreme precipitation"
+  ),
+  Output = c(
+    "DW mode rasters, change mask",
+    "MAD map, cosine change map",
+    "Embedding rasters, cluster maps",
+    "Prediction map, confusion matrix, F1 scores",
+    "Precipitation frequency raster",
+    "Bivariate map, boxplots"
+  )
+)
+kable(steps, caption = "Six-part analysis pipeline.")
+```
+
+### Change Detection Metrics
+
+Two complementary pixel-wise metrics are computed across the 64-dimensional embedding space:
+
+**Mean Absolute Difference (MAD)**
+
+$$\text{MAD}(p) = \frac{1}{64} \sum_{i=1}^{64} |e_{2024,i}(p) - e_{2018,i}(p)|$$
+
+Sensitive to the *magnitude* of change across all embedding dimensions.
+
+**Cosine Dissimilarity**
+
+$$\text{CD}(p) = 1 - \frac{\mathbf{e}_{2018}(p) \cdot \mathbf{e}_{2024}(p)}{\|\mathbf{e}_{2018}(p)\| \cdot \|\mathbf{e}_{2024}(p)\|}$$
+
+Scale-invariant — captures *directional* shifts in the embedding space regardless of brightness or amplitude changes.
+
+### Classification
+
+Random Forest (300 trees, mtry = $\sqrt{64} = 8$) and ridge multinomial regression (linear probe) are trained on 2024 embeddings with Dynamic World mode labels as targets. An 80/20 stratified random split (n = 15,000 pixels, seed = 42) is used for evaluation.
+
+# Results
+
+## Dynamic World Land Cover Change
+
+```{r area-change, fig.cap="Land cover area change between 2018 and 2024 (Dynamic World mode composite)."}
+area_stats <- read.csv("results/DW_area_change_stats.csv")
+names(area_stats) <- c("class", "area_2018_km2", "area_2024_km2", "change_km2")
+area_stats$direction <- ifelse(area_stats$change_km2 > 0, "Gain", "Loss")
+
+ggplot(area_stats, aes(x = reorder(class, change_km2),
+                        y = change_km2, fill = direction)) +
+  geom_col() +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40") +
+  scale_fill_manual(values = c("Gain" = "#2196F3", "Loss" = "#F44336"), name = NULL) +
+  coord_flip() +
+  scale_y_continuous(labels = label_comma(suffix = " km²")) +
+  labs(
+    title = "Land Cover Area Change (2018 → 2024)",
+    subtitle = "Dynamic World mode composite · Yellow River Delta",
+    x = NULL, y = "Change (km²)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "top", plot.title = element_text(face = "bold"))
+```
+
+```{r area-table, echo=FALSE}
+area_stats |>
+  arrange(desc(abs(change_km2))) |>
+  mutate(
+    area_2018_km2 = comma(round(area_2018_km2, 1)),
+    area_2024_km2 = comma(round(area_2024_km2, 1)),
+    change_km2    = sprintf("%+.1f", change_km2)
+  ) |>
+  kable(
+    col.names = c("Land Cover", "Area 2018 (km²)", "Area 2024 (km²)", "Change (km²)", "Direction"),
+    caption = "Dynamic World land cover area change 2018–2024."
+  )
+```
+
+The two largest signals are:
+
+- **Water +125.6 km²** — consistent with flow restoration policies increasing river and wetland inundation
+- **Crops −130.5 km²** — likely driven by conversion to aquaculture ponds and wetland restoration near the river mouth
+
+## Embedding-Based Change Detection
+
+### MAD and Cosine Change Maps
+
+```{r change-figures, echo=FALSE, fig.cap="MAD (left) and cosine change (right) maps for the Yellow River Delta, 2018–2024 (clipped at 99th percentile).", out.width="49%", fig.show="hold"}
+knitr::include_graphics(c(
+  "figures/embeddings_delta/mad_2018_2024_p99.png",
+  "figures/embeddings_delta/cosine_change_2018_2024_p99.png"
+))
+```
+
+The MAD map highlights the river mouth and coastal fringe as the highest-change zones, consistent with active sediment deposition and aquaculture expansion. The cosine change map emphasises the Bohai Sea shoreline, where spectrally distinct land cover transitions (bare mudflat → water or vegetation) produce strong directional shifts in the embedding space even at moderate MAD magnitude.
+
+## K-Means Clustering
+
+```{r cluster-figures, echo=FALSE, fig.cap="Unsupervised K-means clusters of 2024 satellite embeddings (K=5, left) and K=10 (right).", out.width="49%", fig.show="hold"}
+knitr::include_graphics(c(
+  "figures/embeddings_delta/clusters_2024_K5.png",
+  "figures/embeddings_delta/clusters_2024_K10.png"
+))
+```
+
+```{r cluster-areas, fig.cap="Area (km²) by K-means cluster for K=3, 5, and 10."}
+k_list <- list(K3 = 3, K5 = 5, K10 = 10)
+
+area_all <- lapply(names(k_list), function(k_name) {
+  f <- paste0("results/area_stats/area_by_cluster_", k_name, "_km2.csv")
+  if (!file.exists(f)) return(NULL)
+  d <- read.csv(f)
+  d$K <- k_name
+  d
+}) |> bind_rows()
+
+if (nrow(area_all) > 0) {
+  area_all$cluster <- as.factor(area_all[[1]])
+  names(area_all)[1:2] <- c("cluster", "area_km2")
+
+  ggplot(area_all, aes(x = cluster, y = area_km2, fill = K)) +
+    geom_col(position = "dodge") +
+    facet_wrap(~K, scales = "free_x") +
+    scale_y_continuous(labels = label_comma(suffix = " km²")) +
+    scale_fill_brewer(palette = "Set2") +
+    labs(title = "K-means Cluster Areas", x = "Cluster ID", y = "Area (km²)") +
+    theme_minimal(base_size = 12) +
+    theme(legend.position = "none")
+}
+```
+
+## Classification Performance
+
+```{r metrics-load, echo=FALSE}
+metrics <- read.csv("results/linear_probe/metrics_linear_vs_rf.csv")
+per_class <- read.csv("results/linear_probe/per_class_metrics_rf.csv")
+```
+
+```{r metrics-table, echo=FALSE}
+metrics |>
+  mutate(
+    accuracy  = percent(accuracy,  accuracy = 0.1),
+    macro_f1  = round(macro_f1, 3)
+  ) |>
+  kable(
+    col.names = c("Model", "Overall Accuracy", "Macro-F1"),
+    caption = "Classification performance on 20% held-out test set (n ≈ 3,000 pixels)."
+  )
+```
+
+```{r per-class-plot, fig.cap="Per-class F1 scores (Random Forest) with sample support."}
+per_class |>
+  filter(!is.na(f1)) |>
+  mutate(label_n = paste0("n=", support)) |>
+  ggplot(aes(x = reorder(class_name, f1), y = f1)) +
+  geom_col(fill = "#2B83BA") +
+  geom_text(aes(label = label_n), hjust = -0.15, size = 3.2, colour = "grey30") +
+  coord_flip() +
+  scale_y_continuous(limits = c(0, 1.1)) +
+  labs(
+    title = "Per-Class F1 Score — Random Forest (2024)",
+    subtitle = "Trained on Google Satellite Embeddings V1",
+    x = NULL, y = "F1 score"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+```{r confusion-matrix, echo=FALSE, fig.cap="Normalized confusion matrix for the Random Forest classifier."}
+knitr::include_graphics("figures/linear_probe/confusion_matrix_rf_normalized.png")
+```
+
+### Discussion of Classification Results
+
+The Random Forest achieves **92.9% overall accuracy** with a **macro-F1 of 0.498**. The discrepancy between high OA and moderate macro-F1 reflects severe class imbalance in the Dynamic World label distribution: Crops (n=2,046) and Water (n=526) dominate, while Flooded vegetation (n=33), Bare ground (n=28), and Shrub & scrub (n=4) lack sufficient samples for reliable classification.
+
+The high per-class F1 for Crops (0.955) and Water (0.935) demonstrates that the 64-band embeddings strongly separate the dominant land cover types. Flooded vegetation (F1=0.0) is a critical limitation given its ecological importance in the delta — targeted oversampling or a custom GEE export at higher spatial resolution in wetland zones would improve this.
+
+## Precipitation and Change Hotspots
+
+```{r precip-figures, echo=FALSE, fig.cap="Extreme precipitation frequency (left) and spatial overlay with MAD change hotspots (right).", out.width="49%", fig.show="hold"}
+knitr::include_graphics(c(
+  "figures/extreme_precip_freq_p95_2018_2024.png",
+  "figures/overlay_extremeFreq_p95__MADhotspots.png"
+))
+```
+
+```{r precip-boxplot, echo=FALSE, fig.cap="Distribution of extreme precipitation frequency at MAD hotspot pixels vs. background."}
+knitr::include_graphics("figures/boxplot_extremeFreq_p95__MADhotspots.png")
+```
+
+# Conclusions
+
+1. **Embedding-based change detection is highly sensitive to delta dynamics.** The MAD and cosine change maps delineate the active river mouth, coastal fringe, and inland wetland expansion zones without requiring any labelled training data.
+
+2. **Water gained 125.6 km² and cropland lost 130.5 km²** over 2018–2024 — the dominant land cover transition signals in the delta, consistent with national flow restoration policy and aquaculture expansion.
+
+3. **The Random Forest classifier achieves 92.9% OA** on the dominant classes (Crops, Water, Built area) using 64-band embeddings alone, validating the discriminative power of satellite foundation model features for land cover mapping.
+
+4. **Rare classes (Flooded vegetation, Bare ground) remain a classification challenge** due to label imbalance in Dynamic World. Future work should incorporate targeted sampling in ecologically sensitive zones.
+
+5. **Extreme precipitation hotspots co-locate with high-MAD pixels** along the coastal fringe, suggesting that storm-driven inundation contributes to detectable embedding-space changes beyond secular land cover trends.
+
+# Reproducibility
+
+All analysis code is available in the `Scripts/` directory. Configure `Scripts/config.R` with your machine paths and Google Earth Engine project ID before running.
+
+**R session information:**
+
+```{r session-info, echo=FALSE}
+sessionInfo()
+```
+
+# References
+
+::: {#refs}
+:::

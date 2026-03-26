@@ -10,18 +10,18 @@
 # Author: Bouchra Daddaoui
 # ========================================================================
 
+source("Scripts/config.R")   # sets PROJECT_ROOT, PYTHON_PATH, GEE_PROJECT
+
 suppressPackageStartupMessages({
   library(reticulate)
 })
 
-Sys.setenv(RETICULATE_PYTHON = "C:/Python313/python.exe")
 ee <- import("ee")
 
 # Authenticate (token can expire)
 ee$Authenticate()
 
-# Use your existing GEE project from screenshot
-ee$Initialize(project = "ee-yellow-river-481216")
+ee$Initialize(project = GEE_PROJECT)
 
 # ---- AOI: Yellow River Delta (robust polygon box) ----
 # This bbox covers the modern delta + estuary near Dongying (Shandong).

@@ -5,25 +5,16 @@
 # ========================================================================
 
 # ---- 0) Setup ----
-setwd("C:/Users/BOUCHRA/Documents/land_cover_gis")
+source("Scripts/config.R")   # sets PROJECT_ROOT, terra options, DW_CLASSES
 
 dir.create("results", showWarnings = FALSE, recursive = TRUE)
 dir.create("results/change_detection", showWarnings = FALSE, recursive = TRUE)
 dir.create("figures", showWarnings = FALSE, recursive = TRUE)
-dir.create("tmp", showWarnings = FALSE, recursive = TRUE)
 
 suppressPackageStartupMessages({
-  library(terra)
   library(ggplot2)
   library(tidyterra)
 })
-
-# Use disk for temp files to avoid RAM crashes
-terraOptions(
-  tempdir  = file.path(getwd(), "tmp"),
-  memfrac  = 0.6,
-  progress = 1
-)
 
 # ---- 1) Inputs ----
 tiles_dir_2018 <- "data/embeddings/2018_tiles"

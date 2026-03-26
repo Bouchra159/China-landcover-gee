@@ -1,10 +1,13 @@
-library(terra)
-library(tidyterra)
-library(ggplot2)
-library(scales)
+source("Scripts/config.R")
 
-tif_path <- "C:/Users/BOUCHRA/Downloads/YRDelta_extremeFreq_p95_2018_2024.tif"
-out_png  <- "C:/Users/BOUCHRA/Downloads/extreme_precip_freq_p95_2018_2024.png"
+suppressPackageStartupMessages({
+  library(tidyterra)
+  library(ggplot2)
+  library(scales)
+})
+
+tif_path <- "figures/YRDelta_extremeFreq_p95_2018_2024.tif"
+out_png  <- "figures/extreme_precip_freq_p95_2018_2024.png"
 
 ext_freq <- rast(tif_path)
 

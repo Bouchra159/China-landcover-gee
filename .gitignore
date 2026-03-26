@@ -38,3 +38,9 @@ Desktop.ini
 
 # Internal dev notes (not for public repo)
 PROJECT_INFO_FOR_CHATGPT.md
+
+# Quarto render output (reproducible from source)
+report_files/
+report.html
+report.pdf
+/.quarto/
