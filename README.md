@@ -273,10 +273,6 @@ Create a project at [code.earthengine.google.com](https://code.earthengine.googl
 
 ---
 
-## Author
-
-**Bouchra Daddaoui**
-Research work on remote sensing, land cover dynamics, and geospatial analysis.
 
 ---
 
@@ -285,4 +281,3 @@ Research work on remote sensing, land cover dynamics, and geospatial analysis.
 - [Google Dynamic World](https://dynamicworld.app/) — near-real-time global land cover (10m)
 - [Google Earth Engine](https://earthengine.google.com/) — cloud-based geospatial analysis platform
 - [Google Satellite Embeddings V1](https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_SATELLITE_EMBEDDING_V1) — foundation model embeddings for satellite imagery
-- Visualization style inspired by [Milos Agathon](https://github.com/milos-agathon)'s cartographic workflows
