@@ -1,8 +1,7 @@
 ---
 title: "Land Cover Change Detection in the Yellow River Delta (2018–2024)"
 subtitle: "Satellite Foundation Model Embeddings × Dynamic World × Random Forest"
-author: "Bouchra Daddaoui"
-date: today
+Project made by: "Bouchra Daddaoui"
 format:
   html:
     toc: true
