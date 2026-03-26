@@ -1,0 +1,40 @@
+# Large raster data — not tracked (too large, reproduce via GEE scripts)
+data/
+
+# Temp directories from terra R package
+terra_tmp/
+tmp/
+
+# Large raster outputs in results (keep CSVs, ignore .tif/.vrt)
+results/**/*.tif
+results/**/*.vrt
+
+# Raster files inside figures
+figures/**/*.tif
+
+# Root-level mosaic rasters
+mosaic_K*.tif
+
+# Clustered rasters from GEE exports
+clusters_gee/
+
+# Temporary embeddings archive
+ee_tiles_archive/
+
+# R session artifacts
+.Rhistory
+.RData
+.Rproj.user/
+
+# VSCode user settings
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Archives (scripts are tracked directly)
+*.zip
+
+# Internal dev notes (not for public repo)
+PROJECT_INFO_FOR_CHATGPT.md

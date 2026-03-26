@@ -1,0 +1,3 @@
+"model","accuracy","macro_f1"
+"Linear probe (ridge)",0.920333333333333,0.458511779818489
+"Random Forest",0.929,0.498088126105073
