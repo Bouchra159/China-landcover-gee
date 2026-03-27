@@ -36,7 +36,7 @@ ee_leaflet_map <- function(
   # Build Leaflet map with base layer
   m <- leaflet::leaflet(
     options = leaflet::leafletOptions(preferCanvas = TRUE)) |>
-    leaflet::fitBounds(xmin, ymin, xmax, ymax)
+    leaflet::setView(lng = center[1], lat = center[2], zoom = zoom)
 
   # Add appropriate base layer
   if (satellite_base) {

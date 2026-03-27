@@ -152,26 +152,34 @@ Key signals: water extent grew (+125 km²) and cropland shrank (−130 km²), co
 ```
 land_cover_gis/
 ├── Scripts/
-│   ├── config.R                              # ← Start here: all paths and parameters
-│   ├── part1_export_DW_delta.r               # Dynamic World export from GEE
-│   ├── part2_change_detection_clean.r        # MAD + cosine change detection
-│   ├── part3_embeddings_export_delta_ee.r    # Export 64-band embeddings from GEE
-│   ├── part3_embeddings_analysis_delta.r     # K-means clustering
-│   ├── part4_linear_probe_baseline_delta.r   # RF + linear probe classification
-│   ├── part5_plot_extreme_precip.r           # ERA5 precipitation frequency maps
-│   ├── part6_extreme_precip_vs_change_hotspots.r  # Bivariate overlay
-│   ├── interactive_map_leaflet.R             # Interactive HTML map (all layers)
-│   ├── publication_figures.R                 # Publication-quality maps with scale bars
-│   └── QA_full_project.r                     # Quality assurance / validation
+│   ├── config.R                                    # ← Start here: all paths and parameters
+│   │
+│   │   # ── Active pipeline (run in order) ──────────────────────────────────────
+│   ├── part1_export_DW_delta.r                     # Dynamic World export from GEE
+│   ├── part2_change_detection_clean.r              # MAD + cosine change detection
+│   ├── part3_embeddings_export_delta_ee.r          # Export 64-band embeddings from GEE
+│   ├── part3_embeddings_analysis_delta.r           # K-means clustering (K = 3, 5, 10)
+│   ├── part4_linear_probe_baseline_delta.r         # RF + linear probe classification
+│   ├── part5_plot_extreme_precip.r                 # ERA5 precipitation frequency maps
+│   ├── part6_extreme_precip_vs_change_hotspots.r   # Bivariate overlay (precip × MAD)
+│   ├── part7_dw_timeseries.r                       # Annual DW time series 2018–2024
+│   ├── cluster_labeling.R                          # Semantic label assignment to K-means clusters
+│   ├── interactive_map_leaflet.R                   # Interactive HTML map (all layers)
+│   ├── publication_figures.R                       # Publication-quality maps with scale bars
+│   ├── QA_full_project.r                           # Quality assurance / validation
+│   │
+│   │   # ── Supporting / helper scripts ─────────────────────────────────────────
+│   ├── part2_download_and_maps.r                   # GEE tile download helper used by part2
+│   ├── part3_export_embeddings_delta_2018_2024.r   # Batch export helper for both years
+│   └── part3_export_smoketest_delta.r              # Coverage smoke-test before full export
+│
+│   # Note: exploratory_initial_workflow.r, roi_diagnostic_embeddings.r, and
+│   # retry_DW_mode_exports.r are development/debug scripts kept for reproducibility
+│   # but are not part of the main analysis pipeline.
 ├── figures/
 │   ├── embeddings_delta/                     # Delta change maps (MAD, cosine, clusters)
 │   ├── linear_probe/                         # Classification figures
-│   └── publication/                          # Scale-bar figures (from publication_figures.R)
-│       ├── fig1_mad_change.png
-│       ├── fig2_cosine_change.png
-│       ├── fig3_dynamic_world_comparison.png
-│       ├── fig4_summary_panel.png
-│       └── fig5_bivariate_change_precip.png
+│   └── publication/                          # Scale-bar figures (run publication_figures.R)
 └── results/
     ├── DW_area_change_stats.csv
     ├── area_stats/                            # K-means cluster areas (km²) per K

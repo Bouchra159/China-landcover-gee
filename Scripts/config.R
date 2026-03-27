@@ -51,8 +51,8 @@ RF_NUM_TREES   <- 300
 RF_MIN_NODE    <- 5
 RF_TRAIN_FRAC  <- 0.80       # fraction of samples used for training
 
-# DW export scale (metres) — 10 for full res, 20 for faster test runs
-DW_EXPORT_SCALE <- 20
+# DW export scale (metres) — 10 = native Dynamic World resolution
+DW_EXPORT_SCALE <- 10
 
 # ---- terra memory/temp --------------------------------------------------
 # Fraction of RAM terra is allowed to use (0.6 = 60%)

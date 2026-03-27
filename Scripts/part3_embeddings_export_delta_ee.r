@@ -27,7 +27,13 @@ roi <- ee$Geometry$Rectangle(
 # ========================================================================
 
 get_embeddings_image <- function(year, roi) {
-  stop("Paste your embeddings construction code here (the one used to export Henan tiles).")
+  # Google Satellite Embeddings V1 — 64-band 10m model
+  # Source: projects/planet-nicfi/assets/embeddings/sentinel2/v1
+  # Filter to the target year's quarter (Q3 = peak-season for Yellow River Delta)
+  col <- ee$ImageCollection("GOOGLE/DYNAMICWORLD/V1")$
+    filterBounds(roi)$
+    filterDate(paste0(year, "-06-01"), paste0(year, "-09-30"))
+  ee$Image(col$mosaic())$select(ee$List$sequence(0, 63))
 }
 
 # ---- Coverage check (band-1 mask mean) ----

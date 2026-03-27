@@ -15,8 +15,8 @@ mad3857_path <- "results/embeddings_delta/mad_2018_2024.tif"
 # Outputs
 mad_reproj_path <- "results/change_detection/mad_delta_reprojected_to_ext.tif"
 hot_path <- "results/change_detection/mad_highchange_delta_95_on_ext.tif"
-overlay_png <- "figures/overlay_extremeFreq_p95__MADhotspots_DELTA.png"
-box_png <- "figures/boxplot_extremeFreq_p95__MADhotspots_DELTA.png"
+overlay_png <- "figures/overlay_extremeFreq_p95__MADhotspots.png"
+box_png <- "figures/boxplot_extremeFreq_p95__MADhotspots.png"
 
 # Load
 ext <- rast(ext_path)
