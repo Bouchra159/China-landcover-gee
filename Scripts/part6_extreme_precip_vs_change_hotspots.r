@@ -33,7 +33,9 @@ mad_on_ext <- project(mad3857, ext, method = "bilinear")
 writeRaster(mad_on_ext, mad_reproj_path, overwrite = TRUE)
 
 # Hotspot mask (p95)
-thr <- global(mad_on_ext, "quantile", probs = 0.95, na.rm = TRUE)[1,1]
+# terra's global() doesn't forward extra args to "quantile" reliably;
+# use base R quantile() on extracted values instead.
+thr <- quantile(values(mad_on_ext, na.rm = TRUE), probs = 0.95, na.rm = TRUE)
 mad_hot <- mad_on_ext > thr
 writeRaster(mad_hot, hot_path, overwrite = TRUE)
 
