@@ -20,6 +20,12 @@ box_png <- "figures/boxplot_extremeFreq_p95__MADhotspots.png"
 
 # Load
 ext <- rast(ext_path)
+# The precipitation TIF was exported without a CRS tag but its coordinates
+# are WGS84 decimal degrees — assign EPSG:4326 so project() works correctly.
+if (is.na(crs(ext)) || crs(ext) == "") {
+  crs(ext) <- "EPSG:4326"
+  message("Note: CRS was missing from ext raster; set to EPSG:4326.")
+}
 mad3857 <- rast(mad3857_path)
 
 # Reproject MAD to precip grid
