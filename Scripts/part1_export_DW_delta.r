@@ -66,7 +66,7 @@ transition <- dw2018$multiply(10)$add(dw2024)$rename("transition")$toInt()$clip(
 
 # ---- Export settings ----
 drive_folder <- "YR_delta_exports"
-scale_m <- 10  # Dynamic World native is 10m
+scale_m <- DW_EXPORT_SCALE  # set in config.R — native DW resolution is 10 m
 
 export_to_drive <- function(img, desc, fname) {
   task <- ee$batch$Export$image$toDrive(

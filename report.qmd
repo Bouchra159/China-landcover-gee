@@ -219,12 +219,28 @@ if (file.exists(lab_path)) {
 
 ```{r cluster-labeled-map, echo=FALSE, fig.cap="K=5 clusters with semantic labels derived from Dynamic World majority class overlay (run Scripts/cluster_labeling.R to generate).", out.width="100%"}
 p <- "figures/publication/fig_clusters_labeled_K5.png"
-if (file.exists(p)) knitr::include_graphics(p)
+if (file.exists(p)) {
+  knitr::include_graphics(p)
+} else {
+  knitr::asis_output(
+    "> **Figure not yet generated.**  \n",
+    "> Run `Scripts/cluster_labeling.R` to assign semantic labels to each cluster and produce this map.  \n",
+    "> Output will be saved to `figures/publication/fig_clusters_labeled_K5.png`.\n"
+  )
+}
 ```
 
 ```{r cluster-composition, echo=FALSE, fig.cap="Full DW class composition of each K=5 cluster. Labels show majority class but clusters often contain meaningful mixtures.", out.width="100%"}
 p <- "figures/publication/fig_cluster_composition_K5.png"
-if (file.exists(p)) knitr::include_graphics(p)
+if (file.exists(p)) {
+  knitr::include_graphics(p)
+} else {
+  knitr::asis_output(
+    "> **Figure not yet generated.**  \n",
+    "> Run `Scripts/cluster_labeling.R` to produce the cluster composition bar charts.  \n",
+    "> Output will be saved to `figures/publication/fig_cluster_composition_K5.png`.\n"
+  )
+}
 ```
 
 The composition bar charts reveal that although most clusters are dominated by a single class, several contain ecologically meaningful mixtures — particularly clusters that span the freshwater–saltwater transition zone, where Flooded vegetation, Water, and Crops co-occur at sub-cluster spatial scales.
@@ -333,6 +349,13 @@ if (file.exists(roc_path)) {
                     "Total change (km²)", "Change (%)", "Rate (km²/yr)"),
       caption = "Rate of land cover change between available endpoints."
     )
+} else {
+  knitr::asis_output(
+    "> **Table not yet available.**  \n",
+    "> Run `Scripts/part7_dw_timeseries.r` to export annual Dynamic World composites ",
+    "> for 2019–2023 and compute per-class rate of change.  \n",
+    "> Output will be saved to `results/timeseries/dw_rate_of_change.csv`.\n"
+  )
 }
 ```
 

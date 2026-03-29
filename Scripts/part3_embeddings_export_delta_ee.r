@@ -27,13 +27,15 @@ roi <- ee$Geometry$Rectangle(
 # ========================================================================
 
 get_embeddings_image <- function(year, roi) {
-  # Google Satellite Embeddings V1 — 64-band 10m model
-  # Source: projects/planet-nicfi/assets/embeddings/sentinel2/v1
-  # Filter to the target year's quarter (Q3 = peak-season for Yellow River Delta)
-  col <- ee$ImageCollection("GOOGLE/DYNAMICWORLD/V1")$
+  # Google Satellite Embeddings V1 — 64-band 10m foundation model embeddings
+  # GEE catalog: https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_SATELLITE_EMBEDDING_V1
+  # Collection ID: GOOGLE/SATELLITE_EMBEDDING/V1
+  # Each image already has exactly 64 float bands — no .select() needed.
+  # Filter to Q3 (Jun–Sep): peak growing/flooding season for Yellow River Delta.
+  col <- ee$ImageCollection("GOOGLE/SATELLITE_EMBEDDING/V1")$
     filterBounds(roi)$
     filterDate(paste0(year, "-06-01"), paste0(year, "-09-30"))
-  ee$Image(col$mosaic())$select(ee$List$sequence(0, 63))
+  ee$Image(col$mosaic())
 }
 
 # ---- Coverage check (band-1 mask mean) ----

@@ -173,9 +173,10 @@ land_cover_gis/
 │   ├── part3_export_embeddings_delta_2018_2024.r   # Batch export helper for both years
 │   └── part3_export_smoketest_delta.r              # Coverage smoke-test before full export
 │
-│   # Note: exploratory_initial_workflow.r, roi_diagnostic_embeddings.r, and
-│   # retry_DW_mode_exports.r are development/debug scripts kept for reproducibility
-│   # but are not part of the main analysis pipeline.
+│   └── archive/
+│       ├── exploratory_initial_workflow.r      # Dev/debug — not part of main pipeline
+│       ├── roi_diagnostic_embeddings.r         # Dev/debug — not part of main pipeline
+│       └── retry_DW_mode_exports.r             # Dev/debug — not part of main pipeline
 ├── figures/
 │   ├── embeddings_delta/                     # Delta change maps (MAD, cosine, clusters)
 │   ├── linear_probe/                         # Classification figures
@@ -278,9 +279,6 @@ Create a project at [code.earthengine.google.com](https://code.earthengine.googl
 | Primary | Dynamic World export | 118.35–119.35 | 37.35–38.15 |
 | Secondary | Change detection (Henan tiles) | 118.55–119.45 | 37.35–38.10 |
 | Smoke test | GEE export verification | 118.72–118.88 | 37.73–37.87 |
-
----
-
 
 ---
 
