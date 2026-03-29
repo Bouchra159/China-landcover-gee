@@ -65,7 +65,7 @@ Using both together distinguishes areas of high-magnitude change (MAD) from area
 ## Classification Performance
 
 Models trained on 2024 embeddings (64 bands) with Dynamic World labels as targets.
-Train/test split: 80/20, sample size: 15,000 pixels, random seed: 42.
+Train/test split: 80/20 stratified random split by class (base R, seed = 42), sample size: 15,000 pixels.
 
 ### Overall Accuracy
 

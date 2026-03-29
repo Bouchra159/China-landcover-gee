@@ -4,7 +4,8 @@
 # Author: Bouchra Daddaoui
 # ========================================================================
 
-setwd("C:/Users/BOUCHRA/Documents/land_cover_gis")
+# NOTE: Run this script from the project root directory (land_cover_gis/).
+# e.g.  setwd("path/to/land_cover_gis"); source("Scripts/part2_download_and_maps.r")
 
 dir.create("data/DW_delta", showWarnings = FALSE, recursive = TRUE)
 dir.create("figures", showWarnings = FALSE, recursive = TRUE)

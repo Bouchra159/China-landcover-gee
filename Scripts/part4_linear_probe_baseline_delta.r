@@ -187,7 +187,11 @@ cat("Sampled rows:", nrow(samp), "\n")
 cat("Unique classes in sample:", length(unique(samp$y)), "\n")
 
 set.seed(42)
-idx <- sample(seq_len(nrow(samp)), size = floor(0.8 * nrow(samp)))
+# Stratified 80/20 split by class label (base R — no caret dependency).
+# tapply splits row indices per class; 80 % of each class goes to train.
+idx <- unlist(tapply(seq_len(nrow(samp)), samp$y, function(i) {
+  sample(i, size = floor(0.8 * length(i)))
+}))
 train <- samp[idx, ]
 test  <- samp[-idx, ]
 x_cols <- setdiff(colnames(train), "y")

@@ -4,6 +4,7 @@
 # Author: Bouchra Daddaoui
 # ========================================================================
 
+# NOTE: Run from project root — all paths below are relative to land_cover_gis/.
 # ---- 0) Setup ----
 source("Scripts/config.R")   # sets PROJECT_ROOT, terra options, DW_CLASSES
 
