@@ -40,6 +40,9 @@ PIXEL_TO_KM2 <- 1e-4
 
 ALL_YEARS <- 2018:2024
 
+# Set TRUE to skip GEE exports and run Stage B only (uses 2018 & 2024 already in data/)
+SKIP_GEE_EXPORT <- TRUE
+
 # ========================================================================
 # STAGE A — Export missing years from GEE
 # ========================================================================
@@ -54,16 +57,28 @@ for (yr in ALL_YEARS) {
   }
 }
 
-missing_years <- setdiff(ALL_YEARS, existing_years)
+missing_years <- if (SKIP_GEE_EXPORT) c() else setdiff(ALL_YEARS, existing_years)
 cat("Years already available:", paste(existing_years, collapse = ", "), "\n")
-cat("Years to export from GEE:", paste(missing_years, collapse = ", "), "\n")
+if (SKIP_GEE_EXPORT) cat("Stage A skipped (SKIP_GEE_EXPORT = TRUE) — running Stage B only.\n") else
+  cat("Years to export from GEE:", paste(missing_years, collapse = ", "), "\n")
 
 if (length(missing_years) > 0) {
 
-  suppressPackageStartupMessages(library(reticulate))
-  ee <- import("ee")
-  ee$Authenticate()
-  ee$Initialize(project = GEE_PROJECT)
+  gee_ok <- tryCatch({
+    suppressPackageStartupMessages(library(reticulate))
+    ee <- import("ee")
+    ee$Authenticate()
+    ee$Initialize(project = GEE_PROJECT)
+    TRUE
+  }, error = function(e) {
+    message("GEE Stage A skipped (auth failed): ", conditionMessage(e))
+    message("Continuing to Stage B with available years only.")
+    FALSE
+  })
+
+  if (!gee_ok) {
+    cat("Skipping GEE exports — running Stage B with existing data.\n")
+  } else {
 
   roi <- ee$Geometry$Rectangle(
     coords   = list(ROI_PRIMARY$xmin, ROI_PRIMARY$ymin,
@@ -153,6 +168,7 @@ if (length(missing_years) > 0) {
     if (ok_r) cat(sprintf("  Saved: %s\n", out_path)) else
       warning(sprintf("  Saved file is not a valid GeoTIFF for %d", yr))
   }
+  } # end gee_ok else block
 }
 
 # ========================================================================

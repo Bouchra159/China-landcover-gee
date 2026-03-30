@@ -15,7 +15,7 @@ setwd(PROJECT_ROOT)
 PYTHON_PATH <- "C:/Users/BOUCHRA/Documents/.virtualenvs/r-reticulate/Scripts/python.exe"
 
 # Your Google Earth Engine project ID (create one at code.earthengine.google.com)
-GEE_PROJECT <- "ee-yellow-river-481216"
+GEE_PROJECT <- "sen1flood11-489213"
 
 # ---- Region of Interest (WGS84 / EPSG:4326) ----------------------------
 # Primary ROI — used for Dynamic World export (Part 1)
